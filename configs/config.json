@@ -1,0 +1,12 @@
+{
+  "encoding": "json",
+  "info_filename": "./logs/server.log",
+  "error_filename": "./logs/server_err.log",
+  "max_size": 1024,
+  "max_backups": 30,
+  "max_age": 7,
+  "compress": true,
+  "division": "time",
+  "level_separate": true,
+  "time_unit": "day"
+}

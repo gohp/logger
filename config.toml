@@ -1,8 +1,0 @@
-InfoFilename="./logs/server.log"
-ErrorFilename="./logs/server_err.log"
-MaxSize=1024
-MaxBackups=30
-MaxAge=7
-Compress=true
-Division="size"
-LevelSeparate=true
