@@ -8,6 +8,7 @@
 - [x] 根据文件大小归档
 - [x] 根据时间归档
 - [x] 时间切割单元可选
+- [ ] Benchmark test
 
 ## Usage
 
@@ -78,5 +79,13 @@ logger.Info("this is a log", logger.WithError("error", errors.New("this is a new
 {"level":"info","time":"2019-09-11T18:38:51.022+0800","msg":"this is a log","Trace":"12345677"}
 {"level":"info","time":"2019-09-11T18:38:51.026+0800","msg":"this is a log","error":"this is a new error"}
 ```
+
+## Benchmark Test
+
+```bash
+BenchmarkLogger-4                2000000               955 ns/op
+BenchmarkLoggerWithFile-4         200000              7952 ns/op
+```
+
 
 
