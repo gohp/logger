@@ -7,9 +7,9 @@
 1. 新建logger
 ```go
 c := logde.New()
-c.SetDivision("time")					// 设置归档方式，"time"时间归档 "size" 文件大小归档，文件大小等可以在配置文件配置
-c.SetTimeUnit(logde.Minute)						// 时间归档 可以设置切割单位
-c.SetEncoding("json")					// 输出格式 "json" 或者 "console"
+c.SetDivision("time")	    // 设置归档方式，"time"时间归档 "size" 文件大小归档，文件大小等可以在配置文件配置
+c.SetTimeUnit(logde.Minute) // 时间归档 可以设置切割单位
+c.SetEncoding("json")	    // 输出格式 "json" 或者 "console"
 
 c.SetInfoFile("./logs/server.log")		// 设置info级别日志
 c.SetErrorFile("./logs/server_err.log")	// 设置warn级别日志
@@ -33,7 +33,7 @@ c := logde.NewFromJson("configs/config.json")
 logger := c.InitLogger()
 ```
 
-3. caller
+3. caller 
 
 ```go
 c.SetCaller(true)
@@ -71,6 +71,6 @@ logger.Info("this is a log", logger.WithError("error", errors.New("this is a new
 ### TODO
 
 - [x] 根据info/warn级别切割日志文件
-- [ ]
 - [x] 根据文件大小归档
 - [x] 根据时间归档
+- [x] 时间切割单元可选
