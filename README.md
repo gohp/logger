@@ -2,7 +2,18 @@
 
 基于Zap,可选日志文件归档方式
 
-### Usage
+## TODO
+
+- [x] 根据info/warn级别切割日志文件
+- [x] 根据文件大小归档
+- [x] 根据时间归档
+- [x] 时间切割单元可选
+
+## Usage
+
+- install logde with go get
+
+`go get -u github.com/wzyonggege/logde`
 
 1. 新建logger
 ```go
@@ -44,9 +55,9 @@ c.SetCaller(true)
 ```go
 logger.Info("info level test")
 logger.Error("error level test")
-logger.Warn("error level test")
-logger.Debug("error level test")
-logger.Fatal("error level test")
+logger.Warn("warn level test")
+logger.Debug("debug level test")
+logger.Fatal("fatal level test")
 ```
 
 ```bash
@@ -68,9 +79,4 @@ logger.Info("this is a log", logger.WithError("error", errors.New("this is a new
 {"level":"info","time":"2019-09-11T18:38:51.026+0800","msg":"this is a log","error":"this is a new error"}
 ```
 
-### TODO
 
-- [x] 根据info/warn级别切割日志文件
-- [x] 根据文件大小归档
-- [x] 根据时间归档
-- [x] 时间切割单元可选
