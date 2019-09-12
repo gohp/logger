@@ -55,7 +55,8 @@ type LogOptions struct {
 	LevelSeparate bool     `json:"level_separate" yaml:"level_separate" toml:"level_separate"`
 	TimeUnit      TimeUnit `json:"time_unit" yaml:"time_unit" toml:"time_unit"`
 
-	caller bool
+	consoleDisplay bool
+	caller         bool
 }
 
 func infoLevel() zap.LevelEnablerFunc {
@@ -72,11 +73,12 @@ func warnLevel() zap.LevelEnablerFunc {
 
 func New() *LogOptions {
 	return &LogOptions{
-		Division:      _defaultDivision,
-		LevelSeparate: false,
-		TimeUnit:      _defaultUnit,
-		Encoding:      _defaultEncoding,
-		caller:        false,
+		Division:       _defaultDivision,
+		LevelSeparate:  false,
+		TimeUnit:       _defaultUnit,
+		Encoding:       _defaultEncoding,
+		caller:         false,
+		consoleDisplay: true,
 	}
 }
 
@@ -85,6 +87,7 @@ func NewFromToml(confPath string) *LogOptions {
 	if _, err := toml.DecodeFile(confPath, &c); err != nil {
 		panic(err)
 	}
+	c.defaultDisplay()
 	return c
 }
 
@@ -98,6 +101,7 @@ func NewFromYaml(confPath string) *LogOptions {
 	if err != nil {
 		fmt.Printf("error: %v", err)
 	}
+	c.defaultDisplay()
 	return c
 }
 
@@ -111,11 +115,20 @@ func NewFromJson(confPath string) *LogOptions {
 	if err != nil {
 		fmt.Printf("error: %v", err)
 	}
+	c.defaultDisplay()
 	return c
 }
 
 func (c *LogOptions) SetDivision(division string) {
 	c.Division = division
+}
+
+func (c *LogOptions) CloseConsoleDisplay() {
+	c.consoleDisplay = false
+}
+
+func (c *LogOptions) defaultDisplay() {
+	c.consoleDisplay = true
 }
 
 func (c *LogOptions) SetCaller(b bool) {
@@ -171,8 +184,10 @@ func (c *LogOptions) InitLogger() *Log {
 		EncodeCaller:   zapcore.FullCallerEncoder,
 	}
 
-	wsInfo = append(wsInfo, zapcore.AddSync(os.Stdout))
-	wsWarn = append(wsWarn, zapcore.AddSync(os.Stdout))
+	if c.consoleDisplay {
+		wsInfo = append(wsInfo, zapcore.AddSync(os.Stdout))
+		wsWarn = append(wsWarn, zapcore.AddSync(os.Stdout))
+	}
 
 	// zapcore WriteSyncer setting
 	if c.isOutput() {
