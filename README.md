@@ -26,7 +26,7 @@ import (
 
 c := logger.New()
 c.SetDivision("time")	    // 设置归档方式，"time"时间归档 "size" 文件大小归档，文件大小等可以在配置文件配置
-c.SetTimeUnit(logde.Minute) // 时间归档 可以设置切割单位
+c.SetTimeUnit(logger.Minute) // 时间归档 可以设置切割单位
 c.SetEncoding("json")	    // 输出格式 "json" 或者 "console"
 
 c.SetInfoFile("./logs/server.log")		// 设置info级别日志
