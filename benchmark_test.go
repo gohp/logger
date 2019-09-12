@@ -1,7 +1,7 @@
 package logde
 
 import (
-	logger "github.com/wzyonggege/logde"
+	logger "github.com/wzyonggege/logger"
 	"testing"
 )
 

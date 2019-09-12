@@ -3,7 +3,7 @@ package main
 import (
 	"errors"
 	"github.com/spf13/pflag"
-	logger "logdemo"
+	logger "github.com/wzyonggege/logger"
 )
 
 var (
