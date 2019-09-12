@@ -1,4 +1,4 @@
-package logde
+package logger
 
 import (
 	logger "github.com/wzyonggege/logger"
