@@ -8,7 +8,7 @@
 - [x] 根据文件大小归档
 - [x] 根据时间归档
 - [x] 时间切割单元可选
-- [ ] Benchmark test
+- [x] Benchmark test
 
 ## Usage
 
@@ -80,11 +80,13 @@ logger.Info("this is a log", logger.WithError("error", errors.New("this is a new
 {"level":"info","time":"2019-09-11T18:38:51.026+0800","msg":"this is a log","error":"this is a new error"}
 ```
 
-## Benchmark Test
+## Performance
 
 ```bash
-BenchmarkLogger-4                2000000               955 ns/op
-BenchmarkLoggerWithFile-4         200000              7952 ns/op
+BenchmarkLogger/logde_logger_without_fields-4            3000000               563 ns/op
+BenchmarkLogger/logde_logger_with_fields-4               2000000               637 ns/op
+BenchmarkLogger/logde_logger_without_fields_write_into_file-4             200000             13021 ns/op
+BenchmarkLogger/logde_logger_with_fields_write_into_file-4                100000             12606 ns/op
 ```
 
 
