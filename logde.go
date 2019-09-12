@@ -259,34 +259,34 @@ func (c *LogOptions) timeDivisionWriter(filename string) io.Writer {
 	return hook
 }
 
-func (logger *Log) Info(msg string, args ...zap.Field) {
-	logger.L.Info(msg, args...)
+func Info(msg string, args ...zap.Field) {
+	Logger.L.Info(msg, args...)
 }
 
-func (logger *Log) Error(msg string, args ...zap.Field) {
-	logger.L.Error(msg, args...)
+func Error(msg string, args ...zap.Field) {
+	Logger.L.Error(msg, args...)
 }
 
-func (logger *Log) Warn(msg string, args ...zap.Field) {
-	logger.L.Warn(msg, args...)
+func Warn(msg string, args ...zap.Field) {
+	Logger.L.Warn(msg, args...)
 }
 
-func (logger *Log) Debug(msg string, args ...zap.Field) {
-	logger.L.Debug(msg, args...)
+func Debug(msg string, args ...zap.Field) {
+	Logger.L.Debug(msg, args...)
 }
 
-func (logger *Log) Fatal(msg string, args ...zap.Field) {
-	logger.L.Fatal(msg, args...)
+func Fatal(msg string, args ...zap.Field) {
+	Logger.L.Fatal(msg, args...)
 }
 
-func (logger *Log) WithAny(k string, v interface{}) zap.Field {
+func WithAny(k string, v interface{}) zap.Field {
 	return zap.Any(k, v)
 }
 
-func (logger *Log) With(k string, v string) zap.Field {
+func With(k string, v string) zap.Field {
 	return zap.String(k, v)
 }
 
-func (logger *Log) WithError(k string, err error) zap.Field {
+func WithError(k string, err error) zap.Field {
 	return zap.NamedError(k, err)
 }
