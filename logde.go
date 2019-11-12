@@ -279,14 +279,35 @@ func Fatal(msg string, args ...zap.Field) {
 	Logger.L.Fatal(msg, args...)
 }
 
-func WithAny(k string, v interface{}) zap.Field {
+func Infof(format string, args ...interface{}) {
+	logMsg := fmt.Sprintf(format, args...)
+	Logger.L.Info(logMsg, )
+}
+
+func Errorf(format string, args ...interface{}) {
+	logMsg := fmt.Sprintf(format, args...)
+	Logger.L.Error(logMsg)
+}
+
+func Warnf(format string, args ...interface{}) {
+	logMsg := fmt.Sprintf(format, args...)
+	Logger.L.Warn(logMsg)
+}
+
+func Debugf(format string, args ...interface{}) {
+	logMsg := fmt.Sprintf(format, args...)
+	Logger.L.Debug(logMsg)
+}
+
+func Fatalf(format string, args ...interface{}) {
+	logMsg := fmt.Sprintf(format, args...)
+	Logger.L.Fatal(logMsg)
+}
+
+func With(k string, v interface{}) zap.Field {
 	return zap.Any(k, v)
 }
 
-func With(k string, v string) zap.Field {
-	return zap.String(k, v)
-}
-
-func WithError(k string, err error) zap.Field {
-	return zap.NamedError(k, err)
+func WithError(err error) zap.Field {
+	return zap.NamedError("error", err)
 }
