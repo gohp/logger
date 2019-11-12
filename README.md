@@ -2,13 +2,12 @@
 
 基于Zap,可选日志文件归档方式
 
-## TODO
+## Feature
 
 - [x] 根据info/warn级别切割日志文件
 - [x] 根据文件大小归档
 - [x] 根据时间归档
 - [x] 时间切割单元可选
-- [x] Benchmark test
 
 ## Usage
 
@@ -73,6 +72,12 @@ logger.Error("error level test")
 logger.Warn("warn level test")
 logger.Debug("debug level test")
 logger.Fatal("fatal level test")
+
+// format
+logger.Infof("info level test: %s", "111")
+logger.Errorf("error level test: %s", "111")
+logger.Warnf("warn level test: %s", "111")
+logger.Debugf("debug level test: %s", "111")
 ```
 
 ```bash
@@ -94,7 +99,7 @@ c := logger.New()
 c.InitLogger()
 
 logger.Info("this is a log", logger.With("Trace", "12345677"))
-logger.Info("this is a log", logger.WithError("error", errors.New("this is a new error")))
+logger.Info("this is a log", logger.WithError(errors.New("this is a new error")))
 ```
 
 ```bash
