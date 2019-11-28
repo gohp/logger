@@ -55,8 +55,8 @@ type LogOptions struct {
 	LevelSeparate bool     `json:"level_separate" yaml:"level_separate" toml:"level_separate"`
 	TimeUnit      TimeUnit `json:"time_unit" yaml:"time_unit" toml:"time_unit"`
 
-	consoleDisplay bool
-	caller         bool
+	closeDisplay int
+	caller       bool
 }
 
 func infoLevel() zap.LevelEnablerFunc {
@@ -73,12 +73,11 @@ func warnLevel() zap.LevelEnablerFunc {
 
 func New() *LogOptions {
 	return &LogOptions{
-		Division:       _defaultDivision,
-		LevelSeparate:  false,
-		TimeUnit:       _defaultUnit,
-		Encoding:       _defaultEncoding,
-		caller:         false,
-		consoleDisplay: true,
+		Division:      _defaultDivision,
+		LevelSeparate: false,
+		TimeUnit:      _defaultUnit,
+		Encoding:      _defaultEncoding,
+		caller:        false,
 	}
 }
 
@@ -87,7 +86,6 @@ func NewFromToml(confPath string) *LogOptions {
 	if _, err := toml.DecodeFile(confPath, &c); err != nil {
 		panic(err)
 	}
-	c.defaultDisplay()
 	return c
 }
 
@@ -101,7 +99,6 @@ func NewFromYaml(confPath string) *LogOptions {
 	if err != nil {
 		fmt.Printf("error: %v", err)
 	}
-	c.defaultDisplay()
 	return c
 }
 
@@ -115,7 +112,6 @@ func NewFromJson(confPath string) *LogOptions {
 	if err != nil {
 		fmt.Printf("error: %v", err)
 	}
-	c.defaultDisplay()
 	return c
 }
 
@@ -124,11 +120,7 @@ func (c *LogOptions) SetDivision(division string) {
 }
 
 func (c *LogOptions) CloseConsoleDisplay() {
-	c.consoleDisplay = false
-}
-
-func (c *LogOptions) defaultDisplay() {
-	c.consoleDisplay = true
+	c.closeDisplay = 1
 }
 
 func (c *LogOptions) SetCaller(b bool) {
@@ -184,7 +176,7 @@ func (c *LogOptions) InitLogger() *Log {
 		EncodeCaller:   zapcore.FullCallerEncoder,
 	}
 
-	if c.consoleDisplay {
+	if c.closeDisplay == 0 {
 		wsInfo = append(wsInfo, zapcore.AddSync(os.Stdout))
 		wsWarn = append(wsWarn, zapcore.AddSync(os.Stdout))
 	}
@@ -222,13 +214,14 @@ func (c *LogOptions) InitLogger() *Log {
 
 	// file line number display
 	development := zap.Development()
+	stackTrace := zap.AddStacktrace(zapcore.WarnLevel)
 	// init default key
 	//filed := zap.Fields(zap.String("serviceName", "serviceName"))
 	var logger *zap.Logger
 	if c.caller {
-		logger = zap.New(core, zap.AddCaller(), development)
+		logger = zap.New(core, zap.AddCaller(), development, stackTrace)
 	} else {
-		logger = zap.New(core, development)
+		logger = zap.New(core, development, stackTrace)
 	}
 
 	Logger = &Log{logger}
@@ -281,7 +274,7 @@ func Fatal(msg string, args ...zap.Field) {
 
 func Infof(format string, args ...interface{}) {
 	logMsg := fmt.Sprintf(format, args...)
-	Logger.L.Info(logMsg, )
+	Logger.L.Info(logMsg)
 }
 
 func Errorf(format string, args ...interface{}) {
