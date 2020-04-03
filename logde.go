@@ -54,6 +54,7 @@ type LogOptions struct {
 	Division      string   `json:"division" yaml:"division" toml:"division"`
 	LevelSeparate bool     `json:"level_separate" yaml:"level_separate" toml:"level_separate"`
 	TimeUnit      TimeUnit `json:"time_unit" yaml:"time_unit" toml:"time_unit"`
+	Stacktrace    bool     `json:"stacktrace" yaml:"stacktrace" toml:"stacktrace"`
 
 	closeDisplay int
 	caller       bool
@@ -202,6 +203,7 @@ func (c *LogOptions) InitLogger() *Log {
 		wsWarn = append(wsWarn, zapcore.AddSync(warnHook))
 	}
 
+	opts := make([]zap.Option, 0)
 	// Separate info and warning log
 	if c.LevelSeparate {
 		core = zapcore.NewTee(
@@ -211,19 +213,19 @@ func (c *LogOptions) InitLogger() *Log {
 	} else {
 		core = zapcore.NewCore(encoder(encoderConfig), zapcore.NewMultiWriteSyncer(wsInfo...), zap.InfoLevel)
 	}
-
-	// file line number display
-	development := zap.Development()
-	stackTrace := zap.AddStacktrace(zapcore.WarnLevel)
-	// init default key
-	//filed := zap.Fields(zap.String("serviceName", "serviceName"))
 	var logger *zap.Logger
-	if c.caller {
-		logger = zap.New(core, zap.AddCaller(), development, stackTrace)
-	} else {
-		logger = zap.New(core, development, stackTrace)
+
+	opts = append(opts, zap.Development())
+
+	if c.Stacktrace {
+		opts = append(opts, zap.AddStacktrace(zapcore.WarnLevel))
 	}
 
+	if c.caller {
+		opts = append(opts, zap.AddCaller())
+	}
+
+	logger = zap.New(core, opts...)
 	Logger = &Log{logger}
 	return Logger
 }
