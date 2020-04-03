@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/BurntSushi/toml"
+	"github.com/getsentry/sentry-go"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -44,20 +45,20 @@ type LogOptions struct {
 	// Encoding sets the logger's encoding. Valid values are "json" and
 	// "console", as well as any third-party encodings registered via
 	// RegisterEncoder.
-	Encoding      string   `json:"encoding" yaml:"encoding" toml:"encoding"`
-	InfoFilename  string   `json:"info_filename" yaml:"info_filename" toml:"info_filename"`
-	ErrorFilename string   `json:"error_filename" yaml:"error_filename" toml:"error_filename"`
-	MaxSize       int      `json:"max_size" yaml:"max_size" toml:"max_size"`
-	MaxBackups    int      `json:"max_backups" yaml:"max_backups" toml:"max_backups"`
-	MaxAge        int      `json:"max_age" yaml:"max_age" toml:"max_age"`
-	Compress      bool     `json:"compress" yaml:"compress" toml:"compress"`
-	Division      string   `json:"division" yaml:"division" toml:"division"`
-	LevelSeparate bool     `json:"level_separate" yaml:"level_separate" toml:"level_separate"`
-	TimeUnit      TimeUnit `json:"time_unit" yaml:"time_unit" toml:"time_unit"`
-	Stacktrace    bool     `json:"stacktrace" yaml:"stacktrace" toml:"stacktrace"`
-
-	closeDisplay int
-	caller       bool
+	Encoding      string             `json:"encoding" yaml:"encoding" toml:"encoding"`
+	InfoFilename  string             `json:"info_filename" yaml:"info_filename" toml:"info_filename"`
+	ErrorFilename string             `json:"error_filename" yaml:"error_filename" toml:"error_filename"`
+	MaxSize       int                `json:"max_size" yaml:"max_size" toml:"max_size"`
+	MaxBackups    int                `json:"max_backups" yaml:"max_backups" toml:"max_backups"`
+	MaxAge        int                `json:"max_age" yaml:"max_age" toml:"max_age"`
+	Compress      bool               `json:"compress" yaml:"compress" toml:"compress"`
+	Division      string             `json:"division" yaml:"division" toml:"division"`
+	LevelSeparate bool               `json:"level_separate" yaml:"level_separate" toml:"level_separate"`
+	TimeUnit      TimeUnit           `json:"time_unit" yaml:"time_unit" toml:"time_unit"`
+	Stacktrace    bool               `json:"stacktrace" yaml:"stacktrace" toml:"stacktrace"`
+	SentryConfig  SentryLoggerConfig `json:"sentry_config" yaml:"sentry_config" toml:"sentry_config"`
+	closeDisplay  int
+	caller        bool
 }
 
 func infoLevel() zap.LevelEnablerFunc {
@@ -152,7 +153,7 @@ func (c *LogOptions) isOutput() bool {
 
 func (c *LogOptions) InitLogger() *Log {
 	var (
-		core               zapcore.Core
+		logger             *zap.Logger
 		infoHook, warnHook io.Writer
 		wsInfo             []zapcore.WriteSyncer
 		wsWarn             []zapcore.WriteSyncer
@@ -204,16 +205,20 @@ func (c *LogOptions) InitLogger() *Log {
 	}
 
 	opts := make([]zap.Option, 0)
-	// Separate info and warning log
+	cos := make([]zapcore.Core, 0)
+
 	if c.LevelSeparate {
-		core = zapcore.NewTee(
+		cos = append(
+			cos,
 			zapcore.NewCore(encoder(encoderConfig), zapcore.NewMultiWriteSyncer(wsInfo...), infoLevel()),
 			zapcore.NewCore(encoder(encoderConfig), zapcore.NewMultiWriteSyncer(wsWarn...), warnLevel()),
 		)
 	} else {
-		core = zapcore.NewCore(encoder(encoderConfig), zapcore.NewMultiWriteSyncer(wsInfo...), zap.InfoLevel)
+		cos = append(
+			cos,
+			zapcore.NewCore(encoder(encoderConfig), zapcore.NewMultiWriteSyncer(wsInfo...), zap.InfoLevel),
+		)
 	}
-	var logger *zap.Logger
 
 	opts = append(opts, zap.Development())
 
@@ -225,7 +230,32 @@ func (c *LogOptions) InitLogger() *Log {
 		opts = append(opts, zap.AddCaller())
 	}
 
-	logger = zap.New(core, opts...)
+	logger = zap.New(zapcore.NewTee(cos...), opts...)
+
+	if c.SentryConfig.DSN != "" {
+		// sentrycore配置
+		cfg := sentryCoreConfig{
+			Level:             zap.ErrorLevel,
+			Tags:              c.SentryConfig.Tags,
+			DisableStacktrace: !c.SentryConfig.AttachStacktrace,
+		}
+		// 生成sentry客户端
+		sentryClient, err := sentry.NewClient(sentry.ClientOptions{
+			Dsn:              c.SentryConfig.DSN,
+			Debug:            c.SentryConfig.Debug,
+			AttachStacktrace: c.SentryConfig.AttachStacktrace,
+			Environment:      c.SentryConfig.Environment,
+		})
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		sCore := NewSentryCore(cfg, sentryClient)
+		logger = logger.WithOptions(zap.WrapCore(func(core zapcore.Core) zapcore.Core {
+			return zapcore.NewTee(core, sCore)
+		}))
+	}
+
 	Logger = &Log{logger}
 	return Logger
 }
