@@ -1,6 +1,8 @@
 package logger
 
-import "time"
+import (
+	"time"
+)
 
 type TimeUnit string
 
