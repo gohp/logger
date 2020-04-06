@@ -12,7 +12,6 @@ require (
 	github.com/lestrrat-go/strftime v1.0.1 // indirect
 	github.com/spf13/pflag v1.0.5
 	github.com/tebeka/strftime v0.1.3 // indirect
-	github.com/wzyonggege/logger v0.1.2
 	go.uber.org/zap v1.14.1
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/yaml.v2 v2.2.8
