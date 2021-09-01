@@ -3,6 +3,11 @@ package logger
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
+	"time"
+
 	"github.com/BurntSushi/toml"
 	"github.com/getsentry/sentry-go"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
@@ -10,10 +15,6 @@ import (
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 	"gopkg.in/yaml.v2"
-	"io"
-	"io/ioutil"
-	"os"
-	"time"
 )
 
 const (
@@ -57,7 +58,7 @@ type LogOptions struct {
 	TimeUnit      TimeUnit           `json:"time_unit" yaml:"time_unit" toml:"time_unit"`
 	Stacktrace    bool               `json:"stacktrace" yaml:"stacktrace" toml:"stacktrace"`
 	SentryConfig  SentryLoggerConfig `json:"sentry_config" yaml:"sentry_config" toml:"sentry_config"`
-	closeDisplay  int
+	CloseDisplay  int                `json:"close_display" yaml:"close_display" toml:"close_display"`
 	caller        bool
 }
 
@@ -122,7 +123,7 @@ func (c *LogOptions) SetDivision(division string) {
 }
 
 func (c *LogOptions) CloseConsoleDisplay() {
-	c.closeDisplay = 1
+	c.CloseDisplay = 1
 }
 
 func (c *LogOptions) SetCaller(b bool) {
@@ -178,7 +179,7 @@ func (c *LogOptions) InitLogger() *Log {
 		EncodeCaller:   zapcore.FullCallerEncoder,
 	}
 
-	if c.closeDisplay == 0 {
+	if c.CloseDisplay == 0 {
 		wsInfo = append(wsInfo, zapcore.AddSync(os.Stdout))
 		wsWarn = append(wsWarn, zapcore.AddSync(os.Stdout))
 	}
