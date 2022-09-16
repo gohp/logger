@@ -2,8 +2,8 @@ package main
 
 import (
 	"errors"
+	"github.com/gohp/logger"
 	"github.com/spf13/pflag"
-	"logger"
 	"time"
 )
 
@@ -24,17 +24,6 @@ func main() {
 
 	c.SetInfoFile("./logs/server.log")      // 设置info级别日志
 	c.SetErrorFile("./logs/server_err.log") // 设置warn级别日志
-
-	c.SentryConfig = logger.SentryLoggerConfig{
-		DSN:              "sentry dsn",
-		Debug:            true,
-		AttachStacktrace: true,
-		Environment:      "dev",
-		Tags: map[string]string{
-			"source": "demo",
-		},
-	}
-
 	c.InitLogger()
 
 	logger.Info("info level test")

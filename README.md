@@ -8,18 +8,17 @@
 - [x] 根据文件大小归档
 - [x] 根据时间归档
 - [x] 时间切割单元可选
-- [x] 日志发送到sentry
 
 ## Usage
 
 - install logger with go get
 
-`go get -u github.com/wzyonggege/logger`
+`go get -u github.com/gohp/logger`
 
 1. 新建logger
 ```go
 import (
- "github.com/wzyonggege/logger"
+ "github.com/gohp/logger"
 )
 
 ...

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/BurntSushi/toml"
-	"github.com/getsentry/sentry-go"
+	"github.com/gin-gonic/gin"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -13,6 +13,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -45,20 +46,20 @@ type LogOptions struct {
 	// Encoding sets the logger's encoding. Valid values are "json" and
 	// "console", as well as any third-party encodings registered via
 	// RegisterEncoder.
-	Encoding      string             `json:"encoding" yaml:"encoding" toml:"encoding"`
-	InfoFilename  string             `json:"info_filename" yaml:"info_filename" toml:"info_filename"`
-	ErrorFilename string             `json:"error_filename" yaml:"error_filename" toml:"error_filename"`
-	MaxSize       int                `json:"max_size" yaml:"max_size" toml:"max_size"`
-	MaxBackups    int                `json:"max_backups" yaml:"max_backups" toml:"max_backups"`
-	MaxAge        int                `json:"max_age" yaml:"max_age" toml:"max_age"`
-	Compress      bool               `json:"compress" yaml:"compress" toml:"compress"`
-	Division      string             `json:"division" yaml:"division" toml:"division"`
-	LevelSeparate bool               `json:"level_separate" yaml:"level_separate" toml:"level_separate"`
-	TimeUnit      TimeUnit           `json:"time_unit" yaml:"time_unit" toml:"time_unit"`
-	Stacktrace    bool               `json:"stacktrace" yaml:"stacktrace" toml:"stacktrace"`
-	SentryConfig  SentryLoggerConfig `json:"sentry_config" yaml:"sentry_config" toml:"sentry_config"`
-	closeDisplay  int
-	caller        bool
+	Encoding      string   `json:"encoding" yaml:"encoding" toml:"encoding"`
+	InfoFilename  string   `json:"info_filename" yaml:"info_filename" toml:"info_filename"`
+	ErrorFilename string   `json:"error_filename" yaml:"error_filename" toml:"error_filename"`
+	MaxSize       int      `json:"max_size" yaml:"max_size" toml:"max_size"`
+	MaxBackups    int      `json:"max_backups" yaml:"max_backups" toml:"max_backups"`
+	MaxAge        int      `json:"max_age" yaml:"max_age" toml:"max_age"`
+	Compress      bool     `json:"compress" yaml:"compress" toml:"compress"`
+	Division      string   `json:"division" yaml:"division" toml:"division"`
+	LevelSeparate bool     `json:"level_separate" yaml:"level_separate" toml:"level_separate"`
+	TimeUnit      TimeUnit `json:"time_unit" yaml:"time_unit" toml:"time_unit"`
+	Stacktrace    bool     `json:"stacktrace" yaml:"stacktrace" toml:"stacktrace"`
+	//SentryConfig  SentryLoggerConfig `json:"sentry_config" yaml:"sentry_config" toml:"sentry_config"`
+	closeDisplay int
+	caller       bool
 }
 
 func infoLevel() zap.LevelEnablerFunc {
@@ -232,30 +233,6 @@ func (c *LogOptions) InitLogger() *Log {
 
 	logger = zap.New(zapcore.NewTee(cos...), opts...)
 
-	if c.SentryConfig.DSN != "" {
-		// sentrycore配置
-		cfg := sentryCoreConfig{
-			Level:             zap.ErrorLevel,
-			Tags:              c.SentryConfig.Tags,
-			DisableStacktrace: !c.SentryConfig.AttachStacktrace,
-		}
-		// 生成sentry客户端
-		sentryClient, err := sentry.NewClient(sentry.ClientOptions{
-			Dsn:              c.SentryConfig.DSN,
-			Debug:            c.SentryConfig.Debug,
-			AttachStacktrace: c.SentryConfig.AttachStacktrace,
-			Environment:      c.SentryConfig.Environment,
-		})
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		sCore := NewSentryCore(cfg, sentryClient)
-		logger = logger.WithOptions(zap.WrapCore(func(core zapcore.Core) zapcore.Core {
-			return zapcore.NewTee(core, sCore)
-		}))
-	}
-
 	Logger = &Log{logger}
 	return Logger
 }
@@ -335,4 +312,77 @@ func With(k string, v interface{}) zap.Field {
 
 func WithError(err error) zap.Field {
 	return zap.NamedError("error", err)
+}
+
+// 给指定的context添加字段（关键方法）
+func AddContext(ctx *gin.Context, fields ...zap.Field) {
+	l, _ := ctx.Get(strconv.Itoa(0))
+	logArgs, ok := l.([]zap.Field)
+	if ok || logArgs == nil {
+		logArgs = append(logArgs, fields...)
+		ctx.Set(strconv.Itoa(0), logArgs)
+	}
+}
+
+// 从指定的context返回一个zap实例（关键方法）
+func WithContext(ctx *gin.Context) *Log {
+	if ctx == nil {
+		return nil
+	}
+	l, _ := ctx.Get(strconv.Itoa(0))
+	logArgs, _ := l.([]zap.Field)
+
+	ctxLogger := &Log{
+		L: Logger.L,
+	}
+
+	if len(logArgs) > 0 {
+		ctxLogger.L = ctxLogger.L.With(logArgs...)
+	}
+	return ctxLogger
+}
+
+func (l *Log) Info(msg string, args ...zap.Field) {
+	l.L.Info(msg, args...)
+}
+
+func (l *Log) Error(msg string, args ...zap.Field) {
+	l.L.Error(msg, args...)
+}
+
+func (l *Log) Warn(msg string, args ...zap.Field) {
+	l.L.Warn(msg, args...)
+}
+
+func (l *Log) Debug(msg string, args ...zap.Field) {
+	l.L.Debug(msg, args...)
+}
+
+func (l *Log) Fatal(msg string, args ...zap.Field) {
+	l.L.Fatal(msg, args...)
+}
+
+func (l *Log) Infof(format string, args ...interface{}) {
+	logMsg := fmt.Sprintf(format, args...)
+	l.L.Info(logMsg)
+}
+
+func (l *Log) Errorf(format string, args ...interface{}) {
+	logMsg := fmt.Sprintf(format, args...)
+	l.L.Error(logMsg)
+}
+
+func (l *Log) Warnf(format string, args ...interface{}) {
+	logMsg := fmt.Sprintf(format, args...)
+	l.L.Warn(logMsg)
+}
+
+func (l *Log) Debugf(format string, args ...interface{}) {
+	logMsg := fmt.Sprintf(format, args...)
+	l.L.Debug(logMsg)
+}
+
+func (l *Log) Fatalf(format string, args ...interface{}) {
+	logMsg := fmt.Sprintf(format, args...)
+	l.L.Fatal(logMsg)
 }
