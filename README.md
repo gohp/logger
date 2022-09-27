@@ -60,7 +60,7 @@ c.SetCaller(true)
 
 ```go
 import (
- "github.com/wzyonggege/logger"
+ "github.com/gohp/logger"
 )
 
 ...
@@ -91,7 +91,7 @@ logger.Debugf("debug level test: %s", "111")
 5. with args
 ```go
 import (
- "github.com/wzyonggege/logger"
+ "github.com/gohp/logger"
 )
 
 ...
@@ -116,28 +116,4 @@ BenchmarkLogger/logde_logger_without_fields_write_into_file-4             200000
 BenchmarkLogger/logde_logger_with_fields_write_into_file-4                100000             12606 ns/op
 ```
 
-6. sentry
-
-```go
-c := logger.New()
-c.SetDivision("time")     // 设置归档方式，"time"时间归档 "size" 文件大小归档，文件大小等可以在配置文件配置
-c.SetTimeUnit(logger.Day) // 时间归档 可以设置切割单位
-c.SetEncoding("json")     // 输出格式 "json" 或者 "console"
-//c.Stacktrace = true
-
-c.SetInfoFile("./logs/server.log")      // 设置info级别日志
-c.SetErrorFile("./logs/server_err.log") // 设置warn级别日志
-
-c.SentryConfig = logger.SentryLoggerConfig{
-    DSN:              "sentry dsn",
-    Debug:            true,
-    AttachStacktrace: true,
-    Environment:      "dev",
-    Tags: map[string]string{
-        "source": "demo",
-    },
-}
-
-c.InitLogger()
-```
 

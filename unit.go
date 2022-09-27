@@ -7,11 +7,12 @@ import (
 type TimeUnit string
 
 const (
-	Minute = "minute"
-	Hour   = "hour"
-	Day    = "day"
-	Month  = "month"
-	Year   = "year"
+	Minute  = "minute"
+	Hour    = "hour"
+	Day     = "day"
+	Month   = "month"
+	Year    = "year"
+	RFC3339 = "2006-01-02T15:04:05Z07:00"
 )
 
 func (t TimeUnit) Format() string {

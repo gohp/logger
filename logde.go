@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/BurntSushi/toml"
@@ -13,7 +14,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"strconv"
 	"time"
 )
 
@@ -57,9 +57,9 @@ type LogOptions struct {
 	LevelSeparate bool     `json:"level_separate" yaml:"level_separate" toml:"level_separate"`
 	TimeUnit      TimeUnit `json:"time_unit" yaml:"time_unit" toml:"time_unit"`
 	Stacktrace    bool     `json:"stacktrace" yaml:"stacktrace" toml:"stacktrace"`
-	//SentryConfig  SentryLoggerConfig `json:"sentry_config" yaml:"sentry_config" toml:"sentry_config"`
-	closeDisplay int
-	caller       bool
+	EncodeTime    string   `json:"encode_time" yaml:"encode_time" toml:"encode_time"`
+	closeDisplay  int
+	caller        bool
 }
 
 func infoLevel() zap.LevelEnablerFunc {
@@ -122,6 +122,10 @@ func (c *LogOptions) SetDivision(division string) {
 	c.Division = division
 }
 
+func (c *LogOptions) SetEncodeTime(format string) {
+	c.EncodeTime = format
+}
+
 func (c *LogOptions) CloseConsoleDisplay() {
 	c.closeDisplay = 1
 }
@@ -163,6 +167,9 @@ func (c *LogOptions) InitLogger() *Log {
 	if c.Encoding == "" {
 		c.Encoding = _defaultEncoding
 	}
+	if c.EncodeTime == "" {
+		c.EncodeTime = RFC3339
+	}
 	encoder := _encoderNameToConstructor[c.Encoding]
 
 	encoderConfig := zapcore.EncoderConfig{
@@ -174,7 +181,7 @@ func (c *LogOptions) InitLogger() *Log {
 		StacktraceKey:  "stacktrace",
 		LineEnding:     zapcore.DefaultLineEnding,
 		EncodeLevel:    zapcore.LowercaseLevelEncoder,
-		EncodeTime:     zapcore.ISO8601TimeEncoder,
+		EncodeTime:     zapcore.TimeEncoderOfLayout(c.EncodeTime),
 		EncodeDuration: zapcore.SecondsDurationEncoder,
 		EncodeCaller:   zapcore.FullCallerEncoder,
 	}
@@ -314,32 +321,49 @@ func WithError(err error) zap.Field {
 	return zap.NamedError("error", err)
 }
 
-// 给指定的context添加字段（关键方法）
-func AddContext(ctx *gin.Context, fields ...zap.Field) {
-	l, _ := ctx.Get(strconv.Itoa(0))
+func AddContext(ctx context.Context, fields ...zap.Field) context.Context {
+	l := ctx.Value("_logger_ctx_val")
 	logArgs, ok := l.([]zap.Field)
 	if ok || logArgs == nil {
 		logArgs = append(logArgs, fields...)
-		ctx.Set(strconv.Itoa(0), logArgs)
+		ctx = context.WithValue(ctx, "_logger_ctx_val", logArgs)
+	}
+	return ctx
+}
+
+func GAddContext(ctx *gin.Context, fields ...zap.Field) {
+	l, _ := ctx.Get("_logger_ctx_val")
+	logArgs, ok := l.([]zap.Field)
+	if ok || logArgs == nil {
+		logArgs = append(logArgs, fields...)
+		ctx.Set("_logger_ctx_val", logArgs)
 	}
 }
 
-// 从指定的context返回一个zap实例（关键方法）
-func WithContext(ctx *gin.Context) *Log {
+func withContext(ctx context.Context) *Log {
 	if ctx == nil {
 		return nil
 	}
-	l, _ := ctx.Get(strconv.Itoa(0))
+	l := ctx.Value("_logger_ctx_val")
 	logArgs, _ := l.([]zap.Field)
 
 	ctxLogger := &Log{
 		L: Logger.L,
 	}
-
 	if len(logArgs) > 0 {
 		ctxLogger.L = ctxLogger.L.With(logArgs...)
 	}
 	return ctxLogger
+}
+
+// WithContext old used
+func WithContext(ctx context.Context) *Log {
+	return withContext(ctx)
+}
+
+// Ctx new func
+func Ctx(ctx context.Context) *Log {
+	return withContext(ctx)
 }
 
 func (l *Log) Info(msg string, args ...zap.Field) {
